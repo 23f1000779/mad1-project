@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block content %}
+<h4>Patient Dashboard - {{ patient.user.name }}</h4>
+<h5>Departments</h5>
+<ul>
+{% for d in departments %}<li>{{ d.name }} - {{ d.description }}</li>{% endfor %}
+</ul>
+<h5>Upcoming Appointments</h5>
+<table class="table"><thead><tr><th>#</th><th>Doctor</th><th>Date</th><th>Time</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+{% for a in upcoming %}
+<tr>
+  <td>{{ a.id }}</td>
+  <td>{{ a.doctor.user.name }}</td>
+  <td>{{ a.date }}</td>
+  <td>{{ a.time.strftime('%H:%M') }}</td>
+  <td>{{ a.status }}</td>
+  <td>
+    <form method="post" action="{{ url_for('main.cancel_appointment', appt_id=a.id) }}" style="display:inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button class="btn btn-sm btn-danger">Cancel</button>
+    </form>
+  </td>
+</tr>
+{% endfor %}
+</tbody></table>
+{% endblock %}

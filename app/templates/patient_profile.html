@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+<h4>{% if patient %}Edit Patient{% else %}Add Patient{% endif %}</h4>
+<form method="post" action="" novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <div class="mb-3"><label>Name</label><input name="name" class="form-control" value="{{ patient.user.name if patient else '' }}" required></div>
+  <div class="mb-3"><label>Email</label><input name="email" class="form-control" value="{{ patient.user.email if patient else '' }}" {% if patient %}readonly{% endif %}></div>
+  <div class="mb-3"><label>Contact</label><input name="contact" class="form-control" value="{{ patient.contact if patient else '' }}"></div>
+  <button class="btn btn-primary" type="submit">{% if patient %}Update{% else %}Add{% endif %}</button>
+</form>
+{% endblock %}

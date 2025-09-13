@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row">
+  <div class="col-md-8">
+    <h4>Treatment for Appointment #{{ appointment.id }}</h4>
+    <form method="post" action="" novalidate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="mb-3"><label>Diagnosis</label><textarea name="diagnosis" class="form-control" required></textarea></div>
+      <div class="mb-3"><label>Prescription</label><textarea name="prescription" class="form-control"></textarea></div>
+      <div class="mb-3"><label>Notes</label><textarea name="notes" class="form-control"></textarea></div>
+      <button class="btn btn-success" type="submit">Save & Complete</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

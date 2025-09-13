@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<h4>Doctors{% if q %} — search '{{ q }}'{% endif %}</h4>
+<table class="table">
+  <thead><tr><th>Name</th><th>Specialization</th><th>Actions</th></tr></thead>
+  <tbody>
+    {% for d in doctors %}
+    <tr><td>{{ d.user.name }}</td><td>{{ d.specialization }}</td><td><a href="{{ url_for('main.view_doctor', doctor_id=d.id) }}" class="btn btn-sm btn-primary">View</a></td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
