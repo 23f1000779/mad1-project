@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
 from .models import db, User, DoctorProfile, PatientProfile, Department, Appointment, Treatment
+from .repositories import userRepository, departmentRepository, doctorProfileRepository
 from .utils import validate_csrf
 from datetime import datetime, date
 from sqlalchemy.exc import IntegrityError
@@ -14,87 +15,18 @@ def role_required(role):
         def wrapper(*args, **kwargs):
             if not current_user.is_authenticated or current_user.role != role:
                 flash('Access denied', 'danger')
-                return redirect(url_for('main.login'))
+                return redirect(url_for('views.login'))
             return fn(*args, **kwargs)
         return wrapper
     return decorator
 
-@main.route('/')
-def index():
-    if current_user.is_authenticated:
-        if current_user.role == 'admin':
-            return redirect(url_for('main.admin_dashboard'))
-        if current_user.role == 'doctor':
-            return redirect(url_for('main.doctor_dashboard'))
-        if current_user.role == 'patient':
-            return redirect(url_for('main.patient_dashboard'))
-    return render_template('index.html')
-
-# ---------- AUTH ----------
-@main.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        email = (request.form.get('email') or '').strip().lower()
-        password = request.form.get('password') or ''
-        if not email or not password:
-            flash('Email and password are required', 'danger')
-            return render_template('login.html')
-        user = User.query.filter_by(email=email).first()
-        if user and user.check_password(password) and user.active:
-            login_user(user)
-            flash('Logged in successfully', 'success')
-            return redirect(url_for('main.index'))
-        flash('Invalid credentials', 'danger')
-    return render_template('login.html')
 
 @main.route('/logout')
 @login_required
 def logout():
     logout_user()
     flash('Logged out', 'info')
-    return redirect(url_for('main.login'))
-
-@main.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        name = (request.form.get('name') or '').strip()
-        email = (request.form.get('email') or '').strip().lower()
-        password = request.form.get('password') or ''
-        contact = (request.form.get('contact') or '').strip()
-        dob_raw = request.form.get('dob') or None
-
-        if not name or not email or not password:
-            flash('Name, email and password are required', 'danger')
-            return render_template('register.html')
-        if len(password) < 6:
-            flash('Password must be at least 6 characters', 'danger')
-            return render_template('register.html')
-
-        dob = None
-        if dob_raw:
-            try:
-                dob = datetime.strptime(dob_raw, '%Y-%m-%d').date()
-            except ValueError:
-                flash('Invalid date of birth format', 'danger')
-                return render_template('register.html')
-
-        if User.query.filter_by(email=email).first():
-            flash('Email already exists', 'danger')
-            return render_template('register.html')
-
-        user = User(email=email, name=name, role='patient')
-        user.set_password(password)
-        db.session.add(user)
-        db.session.commit()
-
-        patient = PatientProfile(user_id=user.id, contact=contact, dob=dob)
-        db.session.add(patient)
-        db.session.commit()
-
-        flash('Registration successful. Please login.', 'success')
-        return redirect(url_for('main.login'))
-
-    return render_template('register.html')
+    return redirect(url_for('views.login'))
 
 # ---------- ADMIN ----------
 @main.route('/admin')
@@ -104,29 +36,101 @@ def admin_dashboard():
     total_doctors = DoctorProfile.query.count()
     total_patients = PatientProfile.query.count()
     total_appointments = Appointment.query.count()
+    total_departments = Department.query.count()
     return render_template('admin_dashboard.html',
                            doctors=total_doctors,
                            patients=total_patients,
-                           appointments=total_appointments)
+                           appointments=total_appointments,
+                           departments=total_departments)
+
+@main.route('/admin/departments')
+@login_required
+@role_required('admin')
+def list_departments():
+    depts = Department.query.order_by(Department.name).all()
+    return render_template('department_list.html', departments=depts)
+
+@main.route('/admin/departments/add', methods=['GET', 'POST'])
+@login_required
+@role_required('admin')
+@validate_csrf
+def add_department():
+    if request.method == 'POST':
+        name = (request.form.get('name') or '').strip()
+        description = (request.form.get('description') or '').strip()
+        if not name:
+            flash('Department name is required', 'danger')
+            return render_template('department_form.html')
+        if Department.query.filter_by(name=name).first():
+            flash('Department with this name already exists', 'danger')
+            return render_template('department_form.html')
+        dept = Department(name=name, description=description)
+        db.session.add(dept)
+        db.session.commit()
+        flash('Department added', 'success')
+        return redirect(url_for('main.list_departments'))
+    return render_template('department_form.html')
+
+@main.route('/admin/departments/<int:dept_id>/edit', methods=['GET', 'POST'])
+@login_required
+@role_required('admin')
+@validate_csrf
+def edit_department(dept_id):
+    dept = Department.query.get_or_404(dept_id)
+    if request.method == 'POST':
+        name = (request.form.get('name') or '').strip()
+        description = (request.form.get('description') or '').strip()
+        if not name:
+            flash('Name required', 'danger')
+            return render_template('department_form.html', department=dept)
+        # check uniqueness
+        other = Department.query.filter(Department.name==name, Department.id!=dept.id).first()
+        if other:
+            flash('Another department with this name exists', 'danger')
+            return render_template('department_form.html', department=dept)
+        dept.name = name
+        dept.description = description
+        db.session.commit()
+        flash('Department updated', 'success')
+        return redirect(url_for('main.list_departments'))
+    return render_template('department_form.html', department=dept)
+
+@main.route('/admin/departments/<int:dept_id>/delete', methods=['POST'])
+@login_required
+@role_required('admin')
+@validate_csrf
+def delete_department(dept_id):
+    dept = Department.query.get_or_404(dept_id)
+    # optional: prevent delete if doctors exist
+    if dept.doctors.count() > 0:
+        flash('Cannot delete department with registered doctors. Reassign or remove doctors first.', 'danger')
+        return redirect(url_for('main.list_departments'))
+    db.session.delete(dept)
+    db.session.commit()
+    flash('Department deleted', 'info')
+    return redirect(url_for('main.list_departments'))
+
 
 @main.route('/admin/doctors/add', methods=['GET', 'POST'])
 @login_required
 @role_required('admin')
 @validate_csrf
 def add_doctor():
+    depts = Department.query.order_by(Department.name).all()
     if request.method == 'POST':
         name = (request.form.get('name') or '').strip()
         email = (request.form.get('email') or '').strip().lower()
         specialization = (request.form.get('specialization') or '').strip()
         bio = (request.form.get('bio') or '').strip()
+        dept_id = request.form.get('department_id') or None
 
         if not name or not email:
             flash('Name and email required', 'danger')
-            return render_template('doctor_profile.html')
+            return render_template('doctor_profile.html', departments=depts)
 
         if User.query.filter_by(email=email).first():
             flash('Email already exists', 'danger')
-            return render_template('doctor_profile.html')
+            return render_template('doctor_profile.html', departments=depts)
 
         user = User(email=email, name=name, role='doctor')
         user.set_password('Doctor@123')
@@ -134,38 +138,49 @@ def add_doctor():
         db.session.commit()
 
         doc = DoctorProfile(user_id=user.id, specialization=specialization, bio=bio)
+        if dept_id:
+            try:
+                doc.department_id = int(dept_id)
+            except ValueError:
+                doc.department_id = None
         db.session.add(doc)
         db.session.commit()
-
         flash('Doctor added successfully. Default password: Doctor@123', 'success')
         return redirect(url_for('main.admin_dashboard'))
 
-    return render_template('doctor_profile.html')
-
+    return render_template('doctor_profile.html', departments=depts)
 @main.route('/admin/doctors/<int:doctor_id>/edit', methods=['GET', 'POST'])
 @login_required
 @role_required('admin')
 @validate_csrf
 def edit_doctor(doctor_id):
     doc = DoctorProfile.query.get_or_404(doctor_id)
+    depts = Department.query.order_by(Department.name).all()
     if request.method == 'POST':
         name = (request.form.get('name') or '').strip()
         specialization = (request.form.get('specialization') or '').strip()
         bio = (request.form.get('bio') or '').strip()
+        dept_id = request.form.get('department_id') or None
 
         if not name:
             flash('Name is required', 'danger')
-            return render_template('doctor_profile.html', doctor=doc)
+            return render_template('doctor_profile.html', doctor=doc, departments=depts)
 
         doc.user.name = name
         doc.specialization = specialization
         doc.bio = bio
-        db.session.commit()
+        if dept_id:
+            try:
+                doc.department_id = int(dept_id)
+            except ValueError:
+                doc.department_id = None
+        else:
+            doc.department_id = None
 
+        db.session.commit()
         flash('Doctor updated', 'success')
         return redirect(url_for('main.admin_dashboard'))
-
-    return render_template('doctor_profile.html', doctor=doc)
+    return render_template('doctor_profile.html', doctor=doc, departments=depts)
 
 @main.route('/admin/doctors/<int:doctor_id>/delete', methods=['POST'])
 @login_required

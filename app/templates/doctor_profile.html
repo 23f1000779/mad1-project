@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'base.html' %} {% block title %}| Doctor's Profile{% endblock %}
 {% block content %}
 <h4>{% if doctor %}Edit Doctor{% else %}Add Doctor{% endif %}</h4>
 <form method="post" action="" novalidate>
@@ -6,6 +6,20 @@
   <div class="mb-3"><label>Name</label><input name="name" class="form-control" value="{{ doctor.user.name if doctor else '' }}" required></div>
   <div class="mb-3"><label>Email</label><input name="email" class="form-control" value="{{ doctor.user.email if doctor else '' }}" {% if doctor %}readonly{% endif %}></div>
   <div class="mb-3"><label>Specialization</label><input name="specialization" class="form-control" value="{{ doctor.specialization if doctor else '' }}"></div>
+
+  <div class="mb-3">
+    <label>Department</label>
+    <select name="department_id" class="form-select">
+      <option value="">-- Select Department (optional) --</option>
+      {% for d in departments %}
+        <option value="{{ d.id }}"
+          {% if doctor and doctor.department_id == d.id %}selected{% endif %}>
+          {{ d.name }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+
   <div class="mb-3"><label>Bio</label><textarea name="bio" class="form-control">{{ doctor.bio if doctor else '' }}</textarea></div>
   <button class="btn btn-primary" type="submit">{% if doctor %}Update{% else %}Add{% endif %}</button>
 </form>

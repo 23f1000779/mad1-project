@@ -1,6 +1,7 @@
 from . import db
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy.sql import func
 from datetime import datetime
 
 class User(UserMixin, db.Model):
@@ -10,6 +11,8 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(128), nullable=False)
     role = db.Column(db.String(20), nullable=False)  # admin/doctor/patient
     active = db.Column(db.Boolean, default=True)
+    reason= db.Column(db.String(255))  # Reason for deactivation
+    created_at = db.Column(db.DateTime, default=func.now()) # Timestamp of account creation from database
 
     doctor = db.relationship('DoctorProfile', backref='user', uselist=False)
     patient = db.relationship('PatientProfile', backref='user', uselist=False)
@@ -24,12 +27,12 @@ class Department(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), unique=True, nullable=False)
     description = db.Column(db.Text)
-    doctors_registered = db.Column(db.Integer, default=0)
+    doctors = db.relationship('DoctorProfile', backref='department', lazy='dynamic')
 
 class DoctorProfile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    specialization = db.Column(db.String(120))
+    specialization_id = db.Column(db.Integer, db.ForeignKey('department.id'))
     availability_json = db.Column(db.Text)
     bio = db.Column(db.Text)
     appointments = db.relationship('Appointment', backref='doctor', lazy='dynamic')
@@ -49,9 +52,10 @@ class Appointment(db.Model):
     date = db.Column(db.Date, nullable=False)
     time = db.Column(db.Time, nullable=False)
     status = db.Column(db.String(20), default='Booked')  # Booked/Completed/Cancelled
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=func.now()) # Timestamp of appointment creation from database
     treatment = db.relationship('Treatment', backref='appointment', uselist=False)
 
+    # Create constraint to prevent double booking of appointments for the same doctor at the same date and time
     __table_args__ = (
         db.UniqueConstraint('doctor_id', 'date', 'time', name='uix_doctor_datetime'),
     )

@@ -1,11 +1,11 @@
-{% extends 'base.html' %} {% block title %}| Register Patient{% endblock %}
+{% extends 'base.html' %} {% block title %}| Register Doctor{% endblock %}
 {% block content %}
 <div class="row justify-content-center">
   <div class="col-md-8">
     <div class="card">
       <div class="card-body">
-        <h4>Patient Registration</h4>
-        <form method="post" action="{{ url_for('views.register') }}" novalidate>
+        <h4>Doctor Registration</h4>
+        <form method="post" action="{{ url_for('views.register_doctor') }}" novalidate>
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
           <div class="row">
             <div class="col-md-6 mb-3"><label>Name</label><input name="name" class="form-control" required></div>
@@ -13,9 +13,8 @@
           </div>
           <div class="row">
             <div class="col-md-6 mb-3"><label>Password</label><input type="password" name="password" class="form-control" required minlength="6"></div>
-            <div class="col-md-6 mb-3"><label>Contact</label><input name="contact" class="form-control"></div>
+            <div class="col-md-6 mb-3"><label>Specialization</label><input name="specialization" class="form-control" required></div>
           </div>
-          <div class="mb-3"><label>DOB</label><input type="date" name="dob" class="form-control"></div>
           <button class="btn btn-success" type="submit">Register</button>
         </form>
       </div>

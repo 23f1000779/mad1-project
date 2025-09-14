@@ -1,26 +1,39 @@
 import os
+from os import path
 from flask import Flask, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
+from .constants import APP_NAME, APP_VERSION, DB_NAME, DEFAULT_ADMIN, DEFAULT_PASS
 
 db = SQLAlchemy()
 login_manager = LoginManager()
-login_manager.login_view = 'main.login'
-
+login_manager.login_view = 'views.login'  
 def create_app():
     app = Flask(__name__)
-    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'change-this-secret')
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///hospital.db'
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'TheGodMustBeCrazy123!#')
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     db.init_app(app)
     login_manager.init_app(app)
 
-    # Register blueprints (main and api)
+    # Register blueprints (views, main and api)
+    from .views import views as views_bp
     from .routes import main as main_bp
     from .api import api_bp
+
+
+    app.register_blueprint(views_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(api_bp)
+
+    # Inject global constants into template context which shall be used in base.html
+    @app.context_processor
+    def inject_globals():
+        return {
+            "APP_NAME": APP_NAME,
+            "APP_VERSION": APP_VERSION
+        }
 
     # CSRF token: ensure a token exists in session
     @app.before_request
@@ -43,4 +56,19 @@ def create_app():
         except Exception:
             return None
 
+    create_database(app)
     return app
+
+
+def create_database(app):
+    if not path.exists(DB_NAME):
+        with app.app_context():  # Ensure we are in the app context to create the database
+            db.create_all()
+            from .services import UserService
+            userService = UserService()
+            if not userService.get_user_by_email(DEFAULT_ADMIN):
+                userService.register_user(email=DEFAULT_ADMIN, name='Administrator', password=DEFAULT_PASS, role='admin')
+                
+                print(f'Created default admin: {{DEFAULT_ADMIN}} / {{DEFAULT_PASS}}')
+            else:
+                print('Admin already exists')
