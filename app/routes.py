@@ -37,11 +37,19 @@ def admin_dashboard():
     total_patients = PatientProfile.query.count()
     total_appointments = Appointment.query.count()
     total_departments = Department.query.count()
+
+    
+    # provide lists for quick admin actions (limit to last 50 to avoid huge pages)
+    doctors_list = DoctorProfile.query.order_by(DoctorProfile.id.desc()).limit(50).all()
+    patients_list = PatientProfile.query.order_by(PatientProfile.id.desc()).limit(50).all()
+
     return render_template('admin_dashboard.html',
                            doctors=total_doctors,
                            patients=total_patients,
                            appointments=total_appointments,
-                           departments=total_departments)
+                           departments=total_departments,
+                           doctors_list=doctors_list,
+                           patients_list=patients_list)
 
 @main.route('/admin/departments')
 @login_required
@@ -192,6 +200,13 @@ def delete_doctor(doctor_id):
     db.session.commit()
     flash('Doctor deactivated', 'info')
     return redirect(url_for('main.admin_dashboard'))
+
+@main.route('/admin/patients')
+@login_required
+@role_required('admin')
+def list_patients():
+    pats = PatientProfile.query.order_by(PatientProfile.id.desc()).all()
+    return render_template('list_patients.html', patients=pats)
 
 @main.route('/admin/patients/add', methods=['GET', 'POST'])
 @login_required
@@ -466,6 +481,12 @@ def list_all_doctors():
 def view_doctor(doctor_id):
     doc = DoctorProfile.query.get_or_404(doctor_id)
     return render_template('doctor_profile_view.html', doctor=doc)
+
+@main.route('/patients')
+@login_required
+def list_all_patients():
+    patient_list = PatientProfile.query.all()
+    return render_template('list_patients.html', patients=patient_list)
 
 @main.route('/patients/<int:patient_id>')
 @login_required

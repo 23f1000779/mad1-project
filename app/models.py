@@ -32,7 +32,9 @@ class Department(db.Model):
 class DoctorProfile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    specialization_id = db.Column(db.Integer, db.ForeignKey('department.id'))
+    specialization = db.Column(db.String(120))
+    department_id = db.Column(db.Integer, db.ForeignKey('department.id'))
+    contact = db.Column(db.String(40))
     availability_json = db.Column(db.Text)
     bio = db.Column(db.Text)
     appointments = db.relationship('Appointment', backref='doctor', lazy='dynamic')
