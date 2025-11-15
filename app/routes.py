@@ -118,6 +118,13 @@ def delete_department(dept_id):
     flash('Department deleted', 'info')
     return redirect(url_for('main.list_departments'))
 
+@main.route('/admin/doctors')
+@login_required
+@role_required('admin')
+def list_doctors():
+    doctors= DoctorProfile.query.order_by(DoctorProfile.id.desc()).all()
+    return render_template('doctors_list.html', doctors=doctors)
+
 
 @main.route('/admin/doctors/add', methods=['GET', 'POST'])
 @login_required
@@ -206,7 +213,7 @@ def delete_doctor(doctor_id):
 @role_required('admin')
 def list_patients():
     pats = PatientProfile.query.order_by(PatientProfile.id.desc()).all()
-    return render_template('list_patients.html', patients=pats)
+    return render_template('patients_list.html', patients=pats)
 
 @main.route('/admin/patients/add', methods=['GET', 'POST'])
 @login_required
@@ -463,18 +470,18 @@ def search():
         docs = DoctorProfile.query.join(User).filter(
             (User.name.ilike(f'%{q}%')) | (DoctorProfile.specialization.ilike(f'%{q}%'))
         ).all()
-        return render_template('list_doctors.html', doctors=docs, q=q)
+        return render_template('doctors_list.html', doctors=docs, q=q)
     else:
         pats = PatientProfile.query.join(User).filter(
             (User.name.ilike(f'%{q}%')) | (PatientProfile.contact.ilike(f'%{q}%'))
         ).all()
-        return render_template('list_patients.html', patients=pats, q=q)
+        return render_template('patients_list.html', patients=pats, q=q)
 
 @main.route('/doctors')
 @login_required
 def list_all_doctors():
     docs = DoctorProfile.query.all()
-    return render_template('list_doctors.html', doctors=docs)
+    return render_template('doctors_list.html', doctors=docs)
 
 @main.route('/doctors/<int:doctor_id>')
 @login_required
@@ -486,7 +493,7 @@ def view_doctor(doctor_id):
 @login_required
 def list_all_patients():
     patient_list = PatientProfile.query.all()
-    return render_template('list_patients.html', patients=patient_list)
+    return render_template('patients_list.html', patients=patient_list)
 
 @main.route('/patients/<int:patient_id>')
 @login_required

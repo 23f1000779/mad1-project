@@ -5,7 +5,7 @@
   <thead><tr><th>Name</th><th>Contact</th><th>Actions</th></tr></thead>
   <tbody>
     {% for p in patients %}
-    <tr><td>{{ [d].user.name }}</td><td>{{ p.contact }}</td><td><a href="{{ url_for('main.view_patient', patient_id=p.id) }}" class="btn btn-sm btn-primary">View</a></td></tr>
+    <tr><td>{{ p.user.name }}</td><td>{{ p.contact }}</td><td><a href="{{ url_for('main.view_patient', patient_id=p.id) }}" class="btn btn-sm btn-primary">View</a></td></tr>
     {% endfor %}
   </tbody>
 </table>
