@@ -1,8 +1,11 @@
 {% extends 'base.html' %}  {% block title %}| Appointments{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
+  
+
+<div class="d-flex justify-content-between align-items-left mb-3">
   <h4>Appointments</h4>
+  <a class="btn btn-success mb-3" href="{{ url_for('main.admin_create_appointment') }}">New Appointment</a>
 
   <form class="row g-2" method="get" action="{{ url_for('main.admin_appointments') }}">
     <div class="col-auto">
@@ -67,28 +70,25 @@
           {% elif a.status == 'Completed' %}
             <span class="badge bg-success">Completed</span>
           {% elif a.status == 'Cancelled' %}
-            <span class="badge bg-secondary">Cancelled</span>
+            <span class="badge bg-danger">Cancelled</span>
           {% else %}
             <span class="badge bg-warning text-dark">{{ a.status }}</span>
           {% endif %}
         </td>
         <td class="small text-muted">{{ a.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
         <td class="text-end">
-          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('main.doctor_dashboard') }}#appt-{{ a.id }}" title="View details">
+          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('main.admin_appointment_view', appt_id=a.id) }}" title="View details">
             View
           </a>
 
           {# Mark Completed (POST) #}
-          {% if a.status != 'Completed' %}
+          {% if a.status != 'Completed' and a.status != 'Cancelled' %}
           <form method="post" action="{{ url_for('main.admin_mark_completed', appt_id=a.id) }}"
                 class="d-inline-block ms-1" style="display:inline;">
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <button class="btn btn-sm btn-success" title="Mark Completed">Complete</button>
           </form>
-          {% endif %}
 
-          {# Cancel appointment (POST) #}
-          {% if a.status != 'Cancelled' and a.status != 'Completed' %}
           <form method="post" action="{{ url_for('main.admin_cancel_appointment', appt_id=a.id) }}"
                 class="d-inline-block ms-1" style="display:inline;"
                 onsubmit="event.preventDefault(); showDeleteModal('appointment','{{ a.patient.user.name }} - {{ a.date.isoformat() }}', this);">

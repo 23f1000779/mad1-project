@@ -5,6 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from .constants import APP_NAME, APP_VERSION, DB_NAME, DEFAULT_ADMIN, DEFAULT_PASS
 
+
 db = SQLAlchemy()
 login_manager = LoginManager()
 login_manager.login_view = 'views.login'  
@@ -64,10 +65,13 @@ def create_database(app):
     if not path.exists(DB_NAME):
         with app.app_context():  # Ensure we are in the app context to create the database
             db.create_all()
-            from .services import UserService
-            userService = UserService()
-            if not userService.get_user_by_email(DEFAULT_ADMIN):
-                userService.register_user(email=DEFAULT_ADMIN, name='Administrator', password=DEFAULT_PASS, role='admin')
+            from .models import User
+            if not User.query.filter_by(email=DEFAULT_ADMIN).first():
+                user = User(email=DEFAULT_ADMIN, name='Administrator', role='admin')
+                user.set_password(DEFAULT_PASS)
+                
+                db.session.add(user)
+                db.session.commit()
                 
                 print(f'Created default admin: {{DEFAULT_ADMIN}} / {{DEFAULT_PASS}}')
             else:

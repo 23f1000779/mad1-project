@@ -1,12 +1,96 @@
-{% extends 'base.html' %} {% block title %}| Patients{% endblock %}
-{% block content %}
+{% extends 'base.html' %} {% block title %}| Patients{% endblock %} {% block
+content %}
 <h4>Patients{% if q %} — search '{{ q }}'{% endif %}</h4>
-<table class="table">
-  <thead><tr><th>Name</th><th>Contact</th><th>Actions</th></tr></thead>
+<table class="table table-striped table-hover">
+  <thead class="table-dark">
+    <tr>
+      <th>Name</th>
+      <th>Contact</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
   <tbody>
     {% for p in patients %}
-    <tr><td>{{ p.user.name }}</td><td>{{ p.contact }}</td><td><a href="{{ url_for('main.view_patient', patient_id=p.id) }}" class="btn btn-sm btn-primary">View</a></td></tr>
+    <tr>
+      <td>{{ p.user.name }}</td>
+      <td>{{ p.contact }}</td>
+      <td>
+        <a
+          href="{{ url_for('main.view_patient', patient_id=p.id) }}"
+          class="btn btn-sm btn-primary"
+          >View</a
+        >
+        
+          {% if p.is_blacklisted %}
+            <!-- WHITELIST -->
+            <form method="post"
+                  action="{{ url_for('main.admin_whitelist_patient', patient_id=p.id) }}"
+                  class="d-inline-block ms-1">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <button class="btn btn-sm btn-success">Whitelist</button>
+            </form>
+          {% else %}
+            <!-- BLACKLIST BUTTON (opens modal) -->
+            <button class="btn btn-sm btn-danger ms-1"
+                    data-bs-toggle="modal"
+                    data-bs-target="#blacklistModal"
+                    data-patient-id="{{ p.id }}"
+                    data-patient-name="{{ p.user.name }}">
+              Blacklist
+            </button>
+          {% endif %}
+      </td>
+    </tr>
     {% endfor %}
   </tbody>
 </table>
+
+<div class="modal fade" id="blacklistModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <form method="post" id="blacklist-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="patient_id" id="patient-id-field">
+      
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Blacklist Patient</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <p id="patient-name-text"></p>
+
+          <label class="form-label">Reason</label>
+          <textarea name="reason" id="blacklist-reason" 
+                    class="form-control" rows="3" required></textarea>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-danger">Blacklist</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  var modal = document.getElementById('blacklistModal');
+  modal.addEventListener('show.bs.modal', function (event) {
+    var button = event.relatedTarget;
+
+    var patientId = button.getAttribute('data-patient-id');
+    var patientName = button.getAttribute('data-patient-name');
+
+    document.getElementById('patient-id-field').value = patientId;
+    document.getElementById('patient-name-text').innerHTML =
+      "<strong>" + patientName + "</strong>";
+
+    // Update form target URL dynamically
+    document.getElementById('blacklist-form')
+      .action = "/admin/patient/" + patientId + "/blacklist";
+  });
+});
+</script>
 {% endblock %}

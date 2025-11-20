@@ -1,23 +1,205 @@
-{% extends 'base.html' %} {% block title %}| Doctor's Dashboard{% endblock %}
+{% extends 'base.html' %}
+{% block title %}| Doctor's Dashboard{% endblock %}
+
 {% block content %}
-<h4>Doctor Dashboard - {{ doctor.user.name }}</h4>
-<h5>Upcoming Appointments</h5>
-<table class="table"><thead><tr><th>#</th><th>Patient</th><th>Date</th><th>Time</th><th>Status</th><th>Actions</th></tr></thead><tbody>
-{% for a in appointments %}
-<tr>
-  <td>{{ a.id }}</td>
-  <td>{{ a.patient.user.name }}</td>
-  <td>{{ a.date }}</td>
-  <td>{{ a.time.strftime('%H:%M') }}</td>
-  <td>{{ a.status }}</td>
-  <td>
-    <a class="btn btn-sm btn-success" href="{{ url_for('main.complete_appointment', appt_id=a.id) }}">Complete</a>
-    <form method="post" action="{{ url_for('main.doctor_cancel_appointment', appt_id=a.id) }}" style="display:inline">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-      <button class="btn btn-sm btn-danger">Cancel</button>
-    </form>
-  </td>
-</tr>
-{% endfor %}
-</tbody></table>
+<div class="container py-3">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h4 class="mb-0">Doctor Dashboard - {{ doctor.user.name }}</h4>
+      <div class="text-muted small">Manage your schedule, appointments and availability</div>
+    </div>
+
+    <div class="text-end">
+      <!-- Link to availability editor (single-slot-per-day route created earlier) -->
+      <a href="{{ url_for('main.doctor_availability') }}" class="btn btn-sm btn-outline-primary me-2">
+        Edit Weekly Availability
+      </a>
+      <a href="{{ url_for('main.doctor_dashboard') }}" class="btn btn-sm btn-outline-secondary">Refresh</a>
+    </div>
+  </div>
+
+  {# -----------------------
+     KPI row
+     ----------------------- #}
+  {% set all_appts = all_appointments if all_appointments is defined else (appointments if appointments is defined else []) %}
+
+  {% set total_appts = all_appts|length %}
+  {% set cancelled_appts = (all_appts|selectattr('status','equalto','Cancelled')|list)|length %}
+  {% set attended_appts = (all_appts|selectattr('status','equalto','Completed')|list)|length %}
+  {% set booked_appts = (all_appts|selectattr('status','equalto','Booked')|list)|length %}
+
+  <div class="row mb-4">
+    <div class="col-md-3 col-sm-6 mb-2">
+      <div class="card text-center shadow-sm">
+        <div class="card-body">
+          <h6 class="card-title mb-1">Total</h6>
+          <h3 class="mb-0">{{ total_appts }}</h3>
+          <small class="text-muted">Appointments</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6 mb-2">
+      <div class="card text-center shadow-sm">
+        <div class="card-body">
+          <h6 class="card-title mb-1">Attended</h6>
+          <h3 class="mb-0 text-success">{{ attended_appts }}</h3>
+          <small class="text-muted">Completed</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6 mb-2">
+      <div class="card text-center shadow-sm">
+        <div class="card-body">
+          <h6 class="card-title mb-1">Cancelled</h6>
+          <h3 class="mb-0 text-danger">{{ cancelled_appts }}</h3>
+          <small class="text-muted">Cancellations</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6 mb-2">
+      <div class="card text-center shadow-sm">
+        <div class="card-body">
+          <h6 class="card-title mb-1">Booked</h6>
+          <h3 class="mb-0 text-info">{{ booked_appts }}</h3>
+          <small class="text-muted">Upcoming</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# -----------------------
+     Main content columns:
+     Left: Last 5 Appointments (history)
+     Right: Upcoming Appointments table + availability preview
+     ----------------------- #}
+  <div class="row">
+    <div class="col-lg-4 mb-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-header">
+          <strong>Last 5 Appointments</strong>
+        </div>
+
+        <div class="card-body">
+
+          {% if recent_appointments %}
+            <ul class="list-group">
+              {% for a in recent_appointments %}
+                <li class="list-group-item d-flex justify-content-between align-items-start">
+                  <div>
+                    <div><strong>{{ a.patient.user.name }}</strong></div>
+                    <div class="small text-muted">
+                      {{ a.date }} &nbsp;|&nbsp; {{ a.time.strftime('%H:%M') }}
+                    </div>
+                    <div class="small mt-1">
+                      {% if a.status == 'Completed' %}
+                        <span class="badge bg-success">Completed</span>
+                      {% elif a.status == 'Cancelled' %}
+                        <span class="badge bg-danger">Cancelled</span>
+                      {% elif a.status == 'Booked' %}
+                        <span class="badge bg-info text-dark">Booked</span>
+                      {% else %}
+                        <span class="badge bg-secondary">{{ a.status }}</span>
+                      {% endif %}
+                    </div>
+                  </div>
+
+                  <div class="text-end">
+                    <a class="btn btn-sm btn-outline-primary" href="{{ url_for('main.admin_appointment_view', appt_id=a.id, next=request.full_path) }}">View</a>
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <div class="text-muted">No recent appointments found.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-8 mb-4">
+      <div class="card shadow-sm mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <strong>Upcoming Appointments</strong>
+          <small class="text-muted">Next appointments scheduled</small>
+        </div>
+
+        <div class="card-body p-0">
+          <table class="table mb-0">
+            <thead class="table-dark">
+              <tr>
+                <th>#</th>
+                <th>Patient</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Status</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if appointments %}
+                {% for a in appointments %}
+                  <tr class="
+                    {% if a.status == 'Completed' %}table-success
+                    {% elif a.status == 'Booked' %}table-info
+                    {% elif a.status == 'Cancelled' %}table-danger
+                    {% endif %}
+                  ">
+                    <td>{{ a.id }}</td>
+                    <td>{{ a.patient.user.name }}</td>
+                    <td>{{ a.date }}</td>
+                    <td>{{ a.time.strftime('%H:%M') }}</td>
+                    <td>{{ a.status }}</td>
+                    <td class="text-end">
+                      {% if a.status != 'Cancelled' and a.status != 'Completed' %}
+                        <a class="btn btn-sm btn-success" href="{{ url_for('main.complete_appointment', appt_id=a.id) }}">Complete</a>
+                        <form method="post" action="{{ url_for('main.doctor_cancel_appointment', appt_id=a.id) }}" style="display:inline">
+                          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                          <button class="btn btn-sm btn-danger">Cancel</button>
+                        </form>
+                      {% else %}
+                        <a class="btn btn-sm btn-outline-primary" href="{{ url_for('main.admin_appointment_view', appt_id=a.id) }}">View</a>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              {% else %}
+                <tr><td colspan="6" class="text-center text-muted">No upcoming appointments.</td></tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% set avail = availability %}
+      {# Availability preview card #}
+      <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <strong>Your Weekly Availability</strong>
+          <a href="{{ url_for('main.doctor_availability') }}" class="btn btn-sm btn-outline-primary">Edit</a>
+        </div>
+        <div class="card-body">
+          {% for d, iso, label in display_dates %}
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <div class="text-capitalize">{{ label }}</div>
+              <div>
+                {% if avail[iso] %}
+                  <span class="badge bg-light text-dark">{{ avail[iso]['start'] }} - {{ avail[iso]['end'] }}</span>
+                {% else %}
+                  <span class="text-muted small">Not available</span>
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div> <!-- col-lg-8 -->
+  </div> <!-- row -->
+
+</div> <!-- container -->
+
+
 {% endblock %}

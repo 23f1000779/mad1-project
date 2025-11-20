@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}| Doctor search{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+
+      <div class="card mb-3">
+        <div class="card-body">
+            
+          <form class="row g-2" method="get" action="{{ url_for('main.doctor_search') }}">
+            <div class="col-md-5">
+              <input type="search" name="q" class="form-control" placeholder="Search by doctor name, email or specialization" value="{{ q }}">
+            </div>
+
+            <div class="col-md-4">
+              <input type="text" name="specialty" class="form-control" placeholder="Filter by specialization (optional)" value="{{ specialty }}">
+            </div>
+
+            <div class="col-md-3 d-flex gap-2">
+              <button class="btn btn-primary" type="submit">Search</button>
+              <a href="{{ url_for('main.doctor_search') }}" class="btn btn-outline-secondary">Reset</a>
+              <a href="javascript:history.back()" class="btn btn-outline-dark">Back</a>
+              
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <div>
+            <strong>Search results</strong>
+            <div class="small text-muted">Showing {{ pagination.total }} result{{ 's' if pagination.total != 1 else '' }}</div>
+            
+          </div>
+        </div>
+
+        <div class="card-body p-0">
+          {% if results %}
+            <table class="table mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Name</th>
+                  <th>Specialization</th>
+                  <th>Experience</th>
+                  <th class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for d in results %}
+                <tr>
+                  <td>
+                    <a href="{{ url_for('main.view_doctor', doctor_id=d.id) }}">{{ d.user.name }}</a>
+                    <div class="small text-muted">{{ d.user.email }}</div>
+                    {% if d.is_blacklisted %}
+                      <div class="small text-danger">Blacklisted</div>
+                    {% endif %}
+                  </td>
+                  <td>{{ d.specialization or '—' }}</td>
+                  <td>{{ d.experience or '—' }}</td>
+                  <td class="text-end">
+                    <a class="btn btn-sm btn-outline-primary" href="{{ url_for('main.view_doctor', doctor_id=d.id) }}">View</a>
+                    <a class="btn btn-sm btn-success ms-1" href="{{ url_for('main.book_appointment', doctor_id=d.id) }}">Book</a>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+
+            <!-- Pagination -->
+            <nav aria-label="Doctor search pages" class="p-3">
+              <ul class="pagination justify-content-center mb-0">
+                <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                  <a class="page-link" href="{{ url_for('main.doctor_search', q=q, specialty=specialty, page=pagination.prev_page) }}">Previous</a>
+                </li>
+
+                {% for p in range(1, pagination.pages + 1) %}
+                  {% if pagination.pages <= 12 or (p <= 3 or p > pagination.pages - 3 or (p >= pagination.page - 2 and p <= pagination.page + 2)) %}
+                  <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('main.doctor_search', q=q, specialty=specialty, page=p) }}">{{ p }}</a>
+                  </li>
+                  {% elif p == 4 and pagination.page > 6 %}
+                    <li class="page-item disabled"><span class="page-link">…</span></li>
+                  {% elif p == pagination.pages - 3 and pagination.page < pagination.pages - 5 %}
+                    <li class="page-item disabled"><span class="page-link">…</span></li>
+                  {% endif %}
+                {% endfor %}
+
+                <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                  <a class="page-link" href="{{ url_for('main.doctor_search', q=q, specialty=specialty, page=pagination.next_page) }}">Next</a>
+                </li>
+              </ul>
+            </nav>
+
+          {% else %}
+            <div class="p-4 text-center text-muted">No doctors found. Try a different name or specialization.</div>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

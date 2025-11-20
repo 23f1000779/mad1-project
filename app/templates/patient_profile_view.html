@@ -1,0 +1,119 @@
+{% extends 'base.html' %} {% block title %}| View Patient's Profile{% endblock %}
+
+
+{% block content %}
+
+<div class="row justify-content-center">
+  <div class="col-lg-7 col-md-9">
+
+    <div class="card shadow-sm">
+      <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Patient Profile</h5>
+        <a href="javascript:history.back()" class="btn btn-sm btn-outline-light">Back</a>
+      </div>
+
+      <div class="card-body">
+
+        <div class="d-flex align-items-center mb-4">
+   
+          <div>
+            <h4 class="mb-1">{{ patient.user.name }}</h4>
+            <span class="text-muted">{{ patient.user.email }}</span>
+          </div>
+        </div>
+          {% if patient.is_blacklisted %}
+            <div class="text-danger small">
+              <i class="bi bi-shield-exclamation"></i>
+              Blacklisted on {{ patient.blacklisted_at.strftime('%d-%m-%Y') }}  
+              {% if patient.blacklist_reason %}
+                — Reason: {{ patient.blacklist_reason }}
+              {% endif %}
+            </div>
+          {% endif %}
+        <table class="table table-bordered mb-4">
+          <tr>
+            <th width="30%">Phone</th>
+            <td>{{ patient.user.phone }}</td>
+          </tr>
+          <tr>
+            <th>Age</th>
+            <td>{{ patient.age or "—" }}</td>
+          </tr>
+          <tr>
+            <th>Gender</th>
+            <td>{{ patient.gender or "—" }}</td>
+          </tr>
+          <tr>
+            <th>Address</th>
+            <td>{{ patient.address or "Not provided" }}</td>
+          </tr>
+          <tr>
+            <th>Medical History</th>
+            <td>{{ patient.medical_history or "No history available" }}</td>
+          </tr>
+        </table>
+
+        <h6 class="mb-3">Appointment History</h6>
+        {% if appointments %}
+          <ul class="list-group">
+            {% for appt in appointments %}
+                <li class="list-group-item d-flex justify-content-between align-items-start">
+                <div>
+                <div>
+                    <strong>{{ appt.date.strftime('%d-%m-%Y') }}</strong>
+                    &nbsp;|&nbsp; {{ appt.time.strftime('%H:%M') }}
+                    {% if appt.patient and appt.doctor %}
+                    {% if doctor is defined %}
+                        with <a href="{{ url_for('main.admin_view_patient', patient_id=appt.patient.id) }}">{{ appt.patient.user.name }}</a>
+                    {% elif patient is defined %}
+                        with <a href="{{ url_for('main.admin_view_doctor', doctor_id=appt.doctor.id) }}">{{ appt.doctor.user.name }}</a>
+                    {% endif %}
+                    {% endif %}
+                </div>
+                <small class="text-muted">Created: {{ appt.created_at.strftime('%d-%m-%Y %H:%M') }}</small>
+                </div>
+
+                <div class="text-end">
+                <span class="badge 
+                    {% if appt.status == 'Booked' %}bg-info text-dark
+                    {% elif appt.status == 'Completed' %}bg-success
+                    {% elif appt.status == 'Cancelled' %}bg-danger
+                    {% else %}bg-secondary{% endif %}">
+                    {{ appt.status }}
+                </span>
+                <div class="mt-2">
+                    <a class="btn btn-sm btn-outline-primary" href="{{ url_for('main.admin_appointment_view', appt_id=appt.id, next=request.full_path) }}">View</a>
+                </div>
+                </div>
+                </li>
+            {% endfor %}
+          </ul>
+            <!-- Pager -->
+            <nav aria-label="Appointments pagination">
+                <ul class="pagination justify-content-center">
+                <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                    <a class="page-link" href="?page={{ pagination.prev_page }}{% if next %}&next={{ next|urlencode }}{% endif %}" tabindex="-1">Previous</a>
+                </li>
+
+                {% for p in range(1, pagination.total_pages + 1) %}
+                    <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                    <a class="page-link" href="?page={{ p }}{% if next %}&next={{ next|urlencode }}{% endif %}">{{ p }}</a>
+                    </li>
+                {% endfor %}
+
+                <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                    <a class="page-link" href="?page={{ pagination.next_page }}{% if next %}&next={{ next|urlencode }}{% endif %}">Next</a>
+                </li>
+                </ul>
+            </nav>
+        {% else %}
+          <div class="alert alert-secondary">No appointments found.</div>
+        {% endif %}
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

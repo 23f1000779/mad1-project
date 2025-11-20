@@ -1,26 +1,45 @@
 {% extends 'base.html' %} {% block title %}| Doctor's Profile{% endblock %}
 {% block content %}
-<h4>{% if doctor %}Edit Doctor{% else %}Add Doctor{% endif %}</h4>
-<form method="post" action="" novalidate>
-  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-  <div class="mb-3"><label>Name</label><input name="name" class="form-control" value="{{ doctor.user.name if doctor else '' }}" required></div>
-  <div class="mb-3"><label>Email</label><input name="email" class="form-control" value="{{ doctor.user.email if doctor else '' }}" {% if doctor %}readonly{% endif %}></div>
-  <div class="mb-3"><label>Specialization</label><input name="specialization" class="form-control" value="{{ doctor.specialization if doctor else '' }}"></div>
+<div class="row justify-content-center">
+ <div class="col-lg-7 col-md-9">
+    <div class="card shadow-sm">
+      <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">{% if doctor %}Edit Doctor{% else %}Add Doctor{% endif %}</h5>
+      </div>
 
-  <div class="mb-3">
-    <label>Department</label>
-    <select name="department_id" class="form-select">
-      <option value="">-- Select Department (optional) --</option>
-      {% for d in departments %}
-        <option value="{{ d.id }}"
-          {% if doctor and doctor.department_id == d.id %}selected{% endif %}>
-          {{ d.name }}
-        </option>
-      {% endfor %}
-    </select>
+      <div class="card-body">
+
+        <form method="post" action="" novalidate>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <div class="mb-3"><label>Name</label><input name="name" class="form-control" value="{{ doctor.user.name if doctor else '' }}" required></div>
+          <div class="mb-3"><label>Email</label><input name="email" class="form-control" value="{{ doctor.user.email if doctor else '' }}" {% if doctor %}readonly{% endif %}></div>
+          <div class="mb-3"><label>Specialization</label><input name="specialization" class="form-control" value="{{ doctor.specialization if doctor else '' }}"></div>
+          <div class="mb-3"><label>Qualification</label><input name="qualification" class="form-control" value="{{ doctor.qualification if doctor else '' }}"></div>
+          <div class="mb-3"><label>Experience</label><input name="experience" class="form-control" value="{{ doctor.experience if doctor else '' }}"></div>
+
+          <div class="mb-3">
+            <label>Department</label>
+            <select name="department_id" class="form-select">
+              <option value="">-- Select Department (optional) --</option>
+              {% for d in departments %}
+                <option value="{{ d.id }}"
+                  {% if doctor and doctor.department_id == d.id %}selected{% endif %}>
+                  {{ d.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-3"><label>Bio</label><textarea name="bio" class="form-control">{{ doctor.bio if doctor else '' }}</textarea></div>
+
+          <div class="d-flex justify-content-end">
+            <a href="javascript:history.back()" class="btn btn-outline-secondary me-2">Cancel</a>
+            <button id="submit-btn" type="submit" class="btn btn-primary">{% if department %}Update{% else %}Add{% endif %}</button>
+          </div>
+          <!-- <button class="btn btn-primary" type="submit">{% if doctor %}Update{% else %}Add{% endif %}</button> -->
+        </form>
+      </div>
+    </div>
   </div>
-
-  <div class="mb-3"><label>Bio</label><textarea name="bio" class="form-control">{{ doctor.bio if doctor else '' }}</textarea></div>
-  <button class="btn btn-primary" type="submit">{% if doctor %}Update{% else %}Add{% endif %}</button>
-</form>
+</div>
 {% endblock %}

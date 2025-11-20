@@ -1,9 +1,11 @@
 {% extends 'base.html' %} {% block title %}| Departments {% endblock %}
+
 {% block content %}
 <h4>Departments</h4>
 <a class="btn btn-success mb-3" href="{{ url_for('main.add_department') }}">Add Department</a>
-<table class="table">
-  <thead>
+<table class="table table-striped table-hover">
+
+  <thead class="table-dark">
     <tr><th>Name</th><th>Description</th><th># Doctors</th><th>Actions</th></tr>
   </thead>
   <tbody>

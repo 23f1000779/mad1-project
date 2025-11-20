@@ -5,7 +5,7 @@
     <div class="card">
       <div class="card-body">
         <h4>Patient Registration</h4>
-        <form method="post" action="{{ url_for('views.register') }}" novalidate>
+        <form method="post" action="{{ url_for('views.register_patient') }}" novalidate>
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
           <div class="row">
             <div class="col-md-6 mb-3"><label>Name</label><input name="name" class="form-control" required></div>

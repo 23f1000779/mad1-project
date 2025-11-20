@@ -9,11 +9,10 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     name = db.Column(db.String(120), nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
-    role = db.Column(db.String(20), nullable=False)  # admin/doctor/patient
+    role = db.Column(db.String(20), nullable=False)
     active = db.Column(db.Boolean, default=True)
-    reason= db.Column(db.String(255))  # Reason for deactivation
-    created_at = db.Column(db.DateTime, default=func.now()) # Timestamp of account creation from database
-
+    reason= db.Column(db.String(255)) 
+    created_at = db.Column(db.DateTime, default=func.now()) 
     doctor = db.relationship('DoctorProfile', backref='user', uselist=False)
     patient = db.relationship('PatientProfile', backref='user', uselist=False)
 
@@ -33,16 +32,43 @@ class DoctorProfile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     specialization = db.Column(db.String(120))
+    experience = db.Column(db.String(120))
+    qualification = db.Column(db.String(120))
     department_id = db.Column(db.Integer, db.ForeignKey('department.id'))
     contact = db.Column(db.String(40))
+    is_blacklisted = db.Column(db.Boolean, default=False, nullable=False)   
+    blacklist_reason = db.Column(db.Text, nullable=True)
+    blacklisted_at = db.Column(db.DateTime, nullable=True)
+    blacklisted_by = db.Column(db.Integer, nullable=True)  # Admin who blacklisted
     availability_json = db.Column(db.Text)
     bio = db.Column(db.Text)
     appointments = db.relationship('Appointment', backref='doctor', lazy='dynamic')
+
+class DoctorAvailability(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    doctor_id = db.Column(db.Integer, db.ForeignKey('doctor_profile.id', ondelete='CASCADE'), nullable=False)
+    date = db.Column(db.Date, nullable=False)
+    start_time = db.Column(db.Time, nullable=False)
+    end_time = db.Column(db.Time, nullable=False)
+
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=True, onupdate=datetime.utcnow)
+    doctor = db.relationship('DoctorProfile', backref=db.backref('availabilities', cascade='all, delete-orphan', lazy='dynamic'))
+
+
+    __table_args__ = (
+        db.UniqueConstraint('doctor_id', 'date', name='uq_doctor_date'),
+        db.Index('ix_doc_daily_date_time', 'date', 'start_time', 'end_time'),
+    )
 
 class PatientProfile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     contact = db.Column(db.String(40))
+    is_blacklisted = db.Column(db.Boolean, default=False, nullable=False)   
+    blacklist_reason = db.Column(db.Text, nullable=True)
+    blacklisted_at = db.Column(db.DateTime, nullable=True)
+    blacklisted_by = db.Column(db.Integer, nullable=True)  # Admin who blacklisted
     dob = db.Column(db.Date)
     address = db.Column(db.Text)
     appointments = db.relationship('Appointment', backref='patient', lazy='dynamic')

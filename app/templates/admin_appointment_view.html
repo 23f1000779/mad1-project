@@ -1,0 +1,110 @@
+{% extends 'base.html' %} {% block title %}| View Appointment{% endblock %}
+{% block content %}
+
+<div class="row justify-content-center">
+  <div class="col-lg-7 col-md-9">
+
+    <div class="card shadow-sm">
+      <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Appointment Details</h5>
+        <a href="javascript:history.back()" class="btn btn-sm btn-outline-light">Back</a>
+      </div>
+
+      <div class="card-body">
+
+        <table class="table table-bordered mb-4">
+          <tr>
+            <th width="30%">Appointment ID</th>
+            <td>{{ appointment.id }}</td>
+          </tr>
+
+          <tr>
+            <th>Patient</th>
+            <td>
+              <a href="{{ url_for('main.view_patient', patient_id=appointment.patient.id) }}">
+                {{ appointment.patient.user.name }}
+              </a>
+            </td>
+          </tr>
+
+          <tr>
+            <th>Doctor</th>
+            <td>
+              <a href="{{ url_for('main.view_doctor', doctor_id=appointment.doctor.id) }}">
+                {{ appointment.doctor.user.name }}
+              </a>
+              <div class="text-muted small">
+                {{ appointment.doctor.specialization }}
+              </div>
+            </td>
+          </tr>
+
+          <tr>
+            <th>Date</th>
+            <td>{{ appointment.date.strftime('%Y-%m-%d') }}</td>
+          </tr>
+
+          <tr>
+            <th>Time</th>
+            <td>{{ appointment.time.strftime('%H:%M') }}</td>
+          </tr>
+
+          <tr>
+            <th>Status</th>
+            <td>
+              {% if appointment.status == 'Booked' %}
+                <span class="badge bg-info text-dark">Booked</span>
+              {% elif appointment.status == 'Completed' %}
+                <span class="badge bg-success">Completed</span>
+              {% elif appointment.status == 'Cancelled' %}
+                <span class="badge bg-danger">Cancelled</span>
+              {% else %}
+                <span class="badge bg-secondary">{{ appointment.status }}</span>
+              {% endif %}
+            </td>
+          </tr>
+
+          <tr>
+            <th>Created At</th>
+            <td>{{ appointment.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+          </tr>
+
+        </table>
+
+        <!-- TREATMENT INFO SECTION -->
+        <h6 class="mb-3">Treatment Information</h6>
+        {% if appointment.treatment %}
+          <div class="border p-3 rounded bg-light">
+            <p><strong>Diagnosis:</strong> {{ appointment.treatment.diagnosis }}</p>
+            <p><strong>Prescription:</strong> {{ appointment.treatment.prescription }}</p>
+            <p><strong>Notes:</strong> {{ appointment.treatment.notes }}</p>
+          </div>
+        {% else %}
+          <div class="alert alert-warning">
+            No treatment has been added for this appointment.
+          </div>
+        {% endif %}
+
+        <div class="mt-4 d-flex justify-content-end">
+          {% if appointment.status != 'Cancelled' and appointment.status != 'Completed' %}
+            <a href="{{ url_for('main.admin_mark_completed', appt_id=appointment.id) }}"
+               class="btn btn-success me-2">
+              Mark Completed
+            </a>
+
+            <form method="post"
+                  action="{{ url_for('main.admin_cancel_appointment', appt_id=appointment.id) }}"
+                  onsubmit="return confirm('Cancel this appointment?')">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <button class="btn btn-warning">Cancel Appointment</button>
+            </form>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

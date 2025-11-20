@@ -27,7 +27,7 @@
               Register
             </a>
             <ul class="dropdown-menu">
-              <li><a class="dropdown-item"  href="{{ url_for('views.register') }}">Patient</a></li>
+              <li><a class="dropdown-item"  href="{{ url_for('views.register_patient') }}">Patient</a></li>
               <li><a class="dropdown-item"  href="{{ url_for('views.register_doctor') }}">Doctor</a></li>
             </ul>
           </li>
@@ -37,33 +37,41 @@
   </div>
 </nav>
 
- {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-              {% if category == 'danger' %}
-                  <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    {{message}}
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                      <span aria-hidden="true">&times;</span>
-                    </button>
-                  </div>
-              {% endif %}
-              {% if category == 'success' %}
-                  <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{message}}
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                      <span aria-hidden="true">&times;</span>
-                    </button>
-                  </div>
-              {% endif %}
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+
+<!-- ========================= TOAST FLASH MESSAGES ========================= -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 2000;">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="toast align-items-center text-white bg-{{ 
+                'danger' if category=='danger' 
+                else 'success' if category=='success' 
+                else 'warning' if category=='warning' 
+                else 'info'
+              }} border-0 show mb-2"
+             role="alert" aria-live="assertive" aria-atomic="true"
+             data-bs-autohide="true" data-bs-delay="3000">
+
+          <div class="d-flex">
+            <div class="toast-body">
+              {{ message }}
+            </div>
+            <button type="button"
+                    class="btn-close btn-close-white me-2 m-auto"
+                    data-bs-dismiss="toast"
+                    aria-label="Close"></button>
+          </div>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+</div>
 
 <div class="container-fluid mt-3 px-5">
  
   <!-- Main Content -->           
-  {% block content %}{% endblock %}
+  {% block content %}
+  {% endblock %}
 </div>
 
   <script

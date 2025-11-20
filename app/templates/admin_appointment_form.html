@@ -1,0 +1,124 @@
+{% extends 'base.html' %} {% block title %}| Create Appointment(Admin){% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7 col-md-9">
+    <div class="card shadow-sm">
+      <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">Create Appointment (Admin)</h5>
+      </div>
+
+      <div class="card-body">
+
+        <div id="client-alert" class="alert d-none" role="alert"></div>
+
+
+        <form id="create-appt-form" method="post" action="{{ url_for('main.admin_create_appointment') }}">
+          <!-- CSRF token -->
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+          <div class="mb-3">
+            <label for="patient" class="form-label">Patient</label>
+            <select id="patient" name="patient_id" class="form-select" required>
+              <option value="" selected disabled>— Select patient —</option>
+              {% for p in patients %}
+                <option value="{{ p.id }}">{{ p.user.name }}</option>
+              {% endfor %}
+            </select>
+            <div class="form-text">Choose the patient for whom you want to book the appointment.</div>
+          </div>
+
+          <div class="mb-3">
+            <label for="doctor" class="form-label">Doctor</label>
+            <select id="doctor" name="doctor_id" class="form-select" required>
+              <option value="" selected disabled>— Select doctor —</option>
+              {% for d in doctors %}
+                <option value="{{ d.id }}">{{ d.user.name }}{% if d.specialization %} — {{ d.specialization }}{% endif %}</option>
+              {% endfor %}
+            </select>
+            <div class="form-text">Select the doctor. Specialization shown for convenience.</div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label for="date" class="form-label">Date</label>
+              <input id="date" name="date" type="date" class="form-control" required>
+            </div>
+
+            <div class="col-md-6">
+              <label for="time" class="form-label">Time</label>
+              <input id="time" name="time" type="time" class="form-control" required>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-end">
+            <a href="javascript:history.back()" class="btn btn-outline-secondary me-2">Cancel</a>
+            <button id="submit-btn" type="submit" class="btn btn-primary">Book Appointment</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+  // Simple client-side validation + UX helpers
+  (function () {
+    const form = document.getElementById('create-appt-form');
+    const alertBox = document.getElementById('client-alert');
+    const dateInput = document.getElementById('date');
+
+    // Prevent picking past dates (set min to today)
+    function setMinDate() {
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      dateInput.min = `${yyyy}-${mm}-${dd}`;
+    }
+
+    function showAlert(message, type = 'danger') {
+      alertBox.className = `alert alert-${type}`;
+      alertBox.textContent = message;
+      alertBox.classList.remove('d-none');
+      // auto-hide after 4s
+      setTimeout(() => {
+        alertBox.classList.add('d-none');
+      }, 4000);
+    }
+
+    form.addEventListener('submit', function (e) {
+      // Basic required-field check (HTML required handles most)
+      const patient = document.getElementById('patient').value;
+      const doctor  = document.getElementById('doctor').value;
+      const dateVal = dateInput.value;
+      const timeVal = document.getElementById('time').value;
+
+      if (!patient || !doctor || !dateVal || !timeVal) {
+        e.preventDefault();
+        showAlert('Please fill all required fields.', 'warning');
+        return;
+      }
+
+      // Prevent booking in the past (date + time)
+      const chosen = new Date(dateVal + 'T' + timeVal);
+      const now = new Date();
+      if (chosen.getTime() < now.getTime()) {
+        e.preventDefault();
+        showAlert('Selected date/time is in the past. Please choose a future time.', 'danger');
+        return;
+      }
+
+      // Optionally, disable submit button to prevent double submits
+      const submitBtn = document.getElementById('submit-btn');
+      submitBtn.disabled = true;
+      submitBtn.innerText = 'Booking...';
+      // Let the form submit normally; server will handle creation & redirect
+    });
+
+    document.addEventListener('DOMContentLoaded', setMinDate);
+  })();
+</script>
+
+
+{% endblock %}

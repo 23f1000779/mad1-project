@@ -1,11 +1,29 @@
 {% extends 'base.html' %} {% block title %}| Patient's Profile{% endblock %}
 {% block content %}
-<h4>{% if patient %}Edit Patient{% else %}Add Patient{% endif %}</h4>
-<form method="post" action="" novalidate>
-  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-  <div class="mb-3"><label>Name</label><input name="name" class="form-control" value="{{ patient.user.name if patient else '' }}" required></div>
-  <div class="mb-3"><label>Email</label><input name="email" class="form-control" value="{{ patient.user.email if patient else '' }}" {% if patient %}readonly{% endif %}></div>
-  <div class="mb-3"><label>Contact</label><input name="contact" class="form-control" value="{{ patient.contact if patient else '' }}"></div>
-  <button class="btn btn-primary" type="submit">{% if patient %}Update{% else %}Add{% endif %}</button>
-</form>
+
+<div class="row justify-content-center">
+ <div class="col-lg-7 col-md-9">
+    <div class="card shadow-sm">
+      <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">{% if patient %}Edit Patient{% else %}Add Patient{% endif %}</h5>
+      </div>
+
+      <div class="card-body">
+
+        <form method="post" action="" novalidate>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <div class="mb-3"><label>Name</label><input name="name" class="form-control" value="{{ patient.user.name if patient else '' }}" required></div>
+          <div class="mb-3"><label>Email</label><input name="email" class="form-control" value="{{ patient.user.email if patient else '' }}" {% if patient %}readonly{% endif %}></div>
+          <div class="mb-3"><label>Contact</label><input name="contact" class="form-control" value="{{ patient.contact if patient else '' }}"></div>
+ 
+          <div class="d-flex justify-content-end">
+            <a href="javascript:history.back()" class="btn btn-outline-secondary me-2">Cancel</a>
+            <button id="submit-btn" type="submit" class="btn btn-primary">{% if patient %}Update{% else %}Add{% endif %}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}

@@ -1,10 +1,14 @@
 {% extends 'base.html' %} {% block title %}| {% if department %}Edit Department{% else %}Add Department{% endif %} {% endblock %}
 {% block content %}
 <div class="row justify-content-center">
-  <div class="col-md-6">
-    <div class="card">
+ <div class="col-lg-7 col-md-9">
+    <div class="card shadow-sm">
+      <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">{% if department %}Edit Department{% else %}Add Department{% endif %}</h5>
+      </div>
+
       <div class="card-body">
-        <h4>{% if department %}Edit Department{% else %}Add Department{% endif %}</h4>
+        
         <form method="post" action="" novalidate>
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
           <div class="mb-3">
@@ -15,7 +19,12 @@
             <label class="form-label">Description</label>
             <textarea name="description" class="form-control">{{ department.description if department else '' }}</textarea>
           </div>
-          <button class="btn btn-primary" type="submit">{% if department %}Update{% else %}Add{% endif %}</button>
+          <div class="d-flex justify-content-end">
+            <a href="javascript:history.back()" class="btn btn-outline-secondary me-2">Cancel</a>
+            <button id="submit-btn" type="submit" class="btn btn-primary">{% if department %}Update{% else %}Add{% endif %}</button>
+          </div>
+
+          <!-- <button class="btn btn-primary" type="submit">{% if department %}Update{% else %}Add{% endif %}</button> -->
         </form>
       </div>
     </div>

@@ -1,18 +1,149 @@
 {% extends 'base.html' %} {% block title %}| Login{% endblock %}
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-md-6">
-    <div class="card">
-      <div class="card-body">
-        <h4>Login</h4>
-        <form method="post"  action="{{ url_for('views.login')}}" novalidate>
-          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-          <div class="mb-3"><label>Email</label><input type="email" name="email" class="form-control" required></div>
-          <div class="mb-3"><label>Password</label><input type="password" name="password" class="form-control" required></div>
-          <button class="btn btn-primary" type="submit">Login</button>
-        </form>
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-sm-10 col-md-8 col-lg-5">
+
+      <!-- Card -->
+      <div class="card shadow-sm">
+        <div class="card-body p-4">
+
+          <!-- Logo / Title -->
+          <div class="text-center mb-3">
+            <!-- Optional logo -->
+            <!-- <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" width="72" class="mb-2"> -->
+            <h3 class="mb-0">Welcome to HMS</h3>
+            <p class="text-muted small">Sign in to your account</p>
+          </div>
+
+          <!-- Flash messages (server-side) -->
+          {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+              <div id="flash-messages" class="mb-3">
+                {% for category, msg in messages %}
+                  <div class="alert alert-{{ 'danger' if category=='danger' else category }} alert-dismissible fade show" role="alert">
+                    {{ msg }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                  </div>
+                {% endfor %}
+              </div>
+            {% endif %}
+          {% endwith %}
+
+          <!-- Login Form -->
+          <form id="login-form" method="post" action="{{ url_for('views.login') }}" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+            <div class="mb-3">
+              <label for="email" class="form-label">Email</label>
+              <input
+                id="email"
+                type="email"
+                name="email"
+                class="form-control"
+                placeholder="you@example.com"
+                required
+                autofocus
+                autocomplete="email">
+              <div class="invalid-feedback">
+                Please enter a valid email address.
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="password" class="form-label">Password</label>
+              <div class="input-group">
+                <input
+                  id="password"
+                  type="password"
+                  name="password"
+                  class="form-control"
+                  placeholder="Your password"
+                  required
+                  autocomplete="current-password">
+                <button class="btn btn-outline-secondary" type="button" id="toggle-password" aria-label="Toggle password visibility" title="Show / hide password">
+                  <i class="bi bi-eye" id="toggle-password-icon" aria-hidden="true"></i>
+                </button>
+                <div class="invalid-feedback">
+                  Please enter your password.
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="1" id="remember" name="remember">
+                <label class="form-check-label small" for="remember">Remember me</label>
+              </div>
+
+              <div>
+                <a href="{{ url_for('views.forgot_password') }}" class="small">Forgot password?</a>
+              </div>
+            </div>
+
+            <div class="d-grid mb-2">
+              <button id="submit-btn" type="submit" class="btn btn-primary">
+                <span id="submit-spinner" class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true"></span>
+                Sign in
+              </button>
+            </div>
+
+            <div class="text-center">
+              <small class="text-muted">Don't have an account? <a href="{{ url_for('views.register_patient') }}">Sign up as a patient</a></small>
+            </div>
+          </form>
+
+        </div>
       </div>
+
+      <!-- Small footer -->
+      <p class="text-center text-muted small mt-3">By signing in you agree to our <a href="#">Terms</a> and <a href="#">Privacy</a>.</p>
     </div>
   </div>
 </div>
+
+<!-- Scripts: client-side form validation, toggle password, spinner -->
+<script>
+  (function () {
+    'use strict';
+
+    // Toggle password visibility
+    const toggleBtn = document.getElementById('toggle-password');
+    const pwdInput = document.getElementById('password');
+    const icon = document.getElementById('toggle-password-icon');
+    if (toggleBtn && pwdInput) {
+      toggleBtn.addEventListener('click', function () {
+        const type = pwdInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        pwdInput.setAttribute('type', type);
+        // toggle icon classes (requires bootstrap-icons)
+        if (icon) {
+          icon.classList.toggle('bi-eye');
+          icon.classList.toggle('bi-eye-slash');
+        }
+      });
+    }
+
+    // Bootstrap form validation + disable submit with spinner
+    const form = document.getElementById('login-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const spinner = document.getElementById('submit-spinner');
+
+    form.addEventListener('submit', function (event) {
+      // Built-in constraint validation
+      if (!form.checkValidity()) {
+        event.preventDefault();
+        event.stopPropagation();
+        form.classList.add('was-validated');
+        return;
+      }
+
+      // show spinner and disable button to prevent double submits
+      submitBtn.disabled = true;
+      spinner.classList.remove('d-none');
+      // allow form to submit
+    });
+
+    // Optional: press Enter in password triggers submit (native)
+  })();
+</script>
 {% endblock %}

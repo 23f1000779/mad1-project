@@ -40,8 +40,8 @@
       <h5 class="mb-0">Appointments</h5>
       <div class="display-6">{{ appointments }}</div>
       <div class="mt-3">
-         <a class="btn btn-sm btn-success" href="{{ url_for('main.add_department') }}">Add</a>
-        <a class="btn btn-sm btn-secondary" href="{{ url_for('main.admin_appointments') }}">View Appointments</a>
+         <a class="btn btn-sm btn-success" href="{{ url_for('main.admin_create_appointment') }}">Create</a>
+        <a class="btn btn-sm btn-secondary" href="{{ url_for('main.admin_appointments') }}">Manage</a>
       </div>
     </div>
   </div>
@@ -58,7 +58,14 @@
       <tbody>
         {% for d in doctors_list %}
         <tr>
-          <td>{{ d.user.name }}</td>
+          <td>
+            {{ d.user.name }}
+            {% if d.is_blacklisted %}
+              <div class="small">
+                <span class="badge bg-danger">Blacklisted</span>
+              </div>
+            {% endif %}
+          </td>
           <td>
             {% if d.department %}{{ d.department.name }} &mdash; {% endif %}{{ d.specialization }}
           </td>
@@ -71,9 +78,10 @@
               <button class="btn btn-sm btn-danger">Delete</button>
             </form>
           </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="3">No doctors found.</td>
         </tr>
-        {% else %}
-        <tr><td colspan="3">No doctors found.</td></tr>
         {% endfor %}
       </tbody>
     </table>
@@ -86,7 +94,13 @@
       <tbody>
         {% for p in patients_list %}
         <tr>
-          <td>{{ p.user.name }}</td>
+          <td>{{ p.user.name }}
+            {% if p.is_blacklisted %}
+              <div class="small">
+                <span class="badge bg-danger">Blacklisted</span>
+              </div>
+            {% endif %}
+          </td>
           <td>{{ p.contact or '—' }}</td>
           <td>
             <a class="btn btn-sm btn-outline-primary" href="{{ url_for('main.edit_patient', patient_id=p.id) }}">Edit</a>

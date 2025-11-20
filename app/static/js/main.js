@@ -46,12 +46,21 @@ function showDeleteModal(type, name, form) {
   const modal = new bootstrap.Modal(modalEl);
   modal.show();
 }
+
 document.addEventListener('DOMContentLoaded', function () {
   const btn = document.getElementById('confirmDeleteBtn');
   if (btn) btn.addEventListener('click', function () {
     if (deleteFormToSubmit) deleteFormToSubmit.submit();
   });
 });
+
+document.addEventListener("DOMContentLoaded", function () {
+    let toastElList = [].slice.call(document.querySelectorAll('.toast'));
+    toastElList.forEach(function (toastEl) {
+      let t = new bootstrap.Toast(toastEl);
+      t.show();
+    });
+  });
 
 /* ---------- AJAX utilities ---------- */
 async function ajaxPostJson(url, jsonObj, method='POST') {

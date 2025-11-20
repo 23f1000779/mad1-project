@@ -15,6 +15,6 @@ def validate_csrf(func):
         if request.method == 'POST':
             if not token or not form_token or token != form_token:
                 flash('Invalid or missing CSRF token', 'danger')
-                return redirect(url_for('main.index'))
+                return redirect(url_for('views.index'))
         return func(*args, **kwargs)
     return wrapper
