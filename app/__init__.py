@@ -28,7 +28,7 @@ def create_app():
     app.register_blueprint(main_bp)
     app.register_blueprint(api_bp)
 
-    # Inject global constants into template context which shall be used in base.html
+    # Global constants into template context which shall be used in base.html
     @app.context_processor
     def inject_globals():
         return {
@@ -36,14 +36,14 @@ def create_app():
             "APP_VERSION": APP_VERSION
         }
 
-    # CSRF token: ensure a token exists in session
+    # CSRF token: token to be used for CSRF protection in forms
     @app.before_request
     def ensure_csrf_token():
         from uuid import uuid4
         if 'csrf_token' not in session:
             session['csrf_token'] = uuid4().hex
 
-    # Inject csrf_token into template context
+    # Push CSRF token to templates
     @app.context_processor
     def inject_csrf_token():
         return dict(csrf_token=session.get('csrf_token'))

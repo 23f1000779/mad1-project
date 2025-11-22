@@ -4,6 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.sql import func
 from datetime import datetime
 
+# User model with roles for Doctor, Patient, and Admin
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
@@ -44,6 +45,7 @@ class DoctorProfile(db.Model):
     bio = db.Column(db.Text)
     appointments = db.relationship('Appointment', backref='doctor', lazy='dynamic')
 
+# Model to represent Doctor's daily availability for one week => can be configured for next N days 
 class DoctorAvailability(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     doctor_id = db.Column(db.Integer, db.ForeignKey('doctor_profile.id', ondelete='CASCADE'), nullable=False)
